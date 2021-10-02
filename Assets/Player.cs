@@ -7,12 +7,14 @@ public class Player : MonoBehaviour
     Rigidbody2D rb;
     public float speed;
     public float jumpForce;
-    bool isGrounded = false;
+    public bool isGrounded = true;
+    bool isJumping = false;
     public Transform isGroundedChecker;
     public float checkGroundRadius;
     public LayerMask groundLayer;
     public Animator anim;
     private SpriteRenderer _renderer;
+    public AudioSource jumpAudio;
 
 
     void Start()
@@ -55,12 +57,18 @@ public class Player : MonoBehaviour
         if ((Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) && isGrounded)
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
-            StartCoroutine(JumpAnimCoroutine());
+            anim.SetTrigger("Jump");
+            
+            JumpAnimCoroutine();
         }
     }
     void CheckIfGrounded()
     {
         Collider2D collider = Physics2D.OverlapCircle(isGroundedChecker.position, checkGroundRadius, groundLayer);
+        if (collider != null && !isGrounded && !isJumping) {
+            anim.SetTrigger("Land");
+            jumpAudio.Play();
+        }
         if (collider != null)
         {
             isGrounded = true;
@@ -73,13 +81,8 @@ public class Player : MonoBehaviour
 
     IEnumerator JumpAnimCoroutine()
     {
-        //Print the time of when the function is first called.
-        Debug.Log("Started Coroutine at timestamp : " + Time.time);
-        anim.SetBool("Jump", true);
-        //yield on a new YieldInstruction that waits for 5 seconds.
+        isJumping = true;
         yield return new WaitForSeconds(0.25f);
-        anim.SetBool("Jump", false);
-        //After we have waited 5 seconds print the time again.
-        Debug.Log("Finished Coroutine at timestamp : " + Time.time);
+        isJumping = false;
     }
 }
