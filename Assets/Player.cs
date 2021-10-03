@@ -5,6 +5,8 @@ using UnityEngine;
 public class Player : MonoBehaviour
 {
     Rigidbody2D rb;
+    private float InitialYPosition;
+    private float InitialXPosition;
     public float speed;
     public float jumpForce;
     public bool isGrounded = true;
@@ -15,25 +17,30 @@ public class Player : MonoBehaviour
     public Animator anim;
     private SpriteRenderer _renderer;
     public AudioSource jumpAudio;
-
+    public bool EndGame = true;
 
     void Start()
     {
+        InitialYPosition = this.transform.position.y;
+        InitialXPosition = this.transform.position.x;
         rb = GetComponent<Rigidbody2D>();
         _renderer = GetComponent<SpriteRenderer>();
         if (_renderer == null)
         {
             Debug.LogError("Player Sprite is missing a renderer");
         }
+        EndGame = false;
     }
 
     // Update is called once per frame
     void Update()
     {
-        Move();
-        Jump();
-        CheckIfGrounded();
-
+        if (!EndGame)
+        {
+            Move();
+            Jump();
+            CheckIfGrounded();
+        }
     }
     void Move()
     {
@@ -50,7 +57,7 @@ public class Player : MonoBehaviour
         }
 
         // clamp x movement
-        transform.position = new Vector3 (Mathf.Clamp(transform.position.x, -4.2f, 4.2f), transform.position.y, transform.position.z);
+        transform.position = new Vector3(Mathf.Clamp(transform.position.x, -4.2f, 4.2f), transform.position.y, transform.position.z);
     }
     void Jump()
     {
@@ -58,16 +65,17 @@ public class Player : MonoBehaviour
         {
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
             anim.SetTrigger("Jump");
-            
+
             JumpAnimCoroutine();
         }
     }
     void CheckIfGrounded()
     {
         Collider2D collider = Physics2D.OverlapCircle(isGroundedChecker.position, checkGroundRadius, groundLayer);
-        if (collider != null && !isGrounded && !isJumping) {
+        if (collider != null && !isGrounded && !isJumping)
+        {
             anim.SetTrigger("Land");
-            jumpAudio.Play();
+            //jumpAudio.Play();
         }
         if (collider != null)
         {
@@ -77,6 +85,18 @@ public class Player : MonoBehaviour
         {
             isGrounded = false;
         }
+    }
+
+    void OnTriggerEnter2D(Collider2D col)
+    {
+        if (col.gameObject.tag == "GameOver")
+        {
+            EndGame = true;
+        }
+    }
+
+    public void resetPosition() {
+        this.transform.position = new Vector3(InitialXPosition, InitialYPosition, 0);
     }
 
     IEnumerator JumpAnimCoroutine()
